@@ -5,85 +5,77 @@
 #include <string.h>
 
 // tap utils
-static inline void ok(bool b)
-{
-  printf("%s - %s line %d\n", b ? "ok" : "not ok", __FILE__, __LINE__);
-}
-static inline void note(const char*s)
+#define ok(b) printf("%s - %s line %d\n", (b) ? "ok" : "not ok", __FILE__, __LINE__);
+
+inline void note(const char*s)
 {
   printf("# %s\n", s);
 }
-static inline void header(const char*s)
+
+void test_nanoutf8_encode(const char* src, uint64_t ch, size_t len)
 {
-  printf("# ---- %20s ----\n", s);
+  char buf[6];
+  size_t got_len = nanoutf8_encode(ch, buf);
+  ok(got_len == len);
+  ok(memcmp(buf, src, len) == 0);
 }
 
-// test cases
-void test_nanoutf8_encode() {
-  header("nanoutf8_encode");
-  {
-    char buf[4];
-    size_t len = nanoutf8_encode(0x0061, buf);
-    ok(len == 1);
-    ok(buf[0] == '\x61');
-  }
-  // copyright sign U+00A9 \xc2\xa9
-  {
-    char buf[4];
-    size_t len = nanoutf8_encode(0x00A9, buf);
-    ok(len == 2);
-    ok(buf[0] == '\xc2');
-    ok(buf[1] == '\xa9');
-    buf[2] = '\0';
-    printf("# copyright sign : %s\n", buf);
-  }
-  // Japanese hiragana U+3042 \xe3\x81\x82
-  {
-    char buf[4];
-    size_t len = nanoutf8_encode(0x3042, buf);
-    ok(len == 3);
-    ok(buf[0] == '\xe3');
-    ok(buf[1] == '\x81');
-    ok(buf[2] == '\x82');
-    buf[3] = '\0';
-    printf("# Japanese Hiragana : %s\n", buf);
-  }
-  // U+20016 \xf0\xa0\x80\x96
-  {
-    char buf[4];
-    size_t len = nanoutf8_encode(0x20016, buf);
-    ok(len == 4);
-    ok(buf[0] == '\xf0');
-    ok(buf[1] == '\xa0');
-    ok(buf[2] == '\x80');
-    ok(buf[3] == '\x96');
-  }
+void test_nanoutf8_next_size(char src, size_t len)
+{
+  ok(nanoutf8_next_size(src) == len);
+}
+
+void test_nanoutf8_peek_char(const char* src, uint64_t ch, size_t len) {
+  bool succeeded;
+  size_t got_len;
+  uint64_t got_ch = nanoutf8_peek_char(src, len, &got_len, &succeeded);
+  ok(got_ch == ch);
+  ok(got_len == len);
+  ok(succeeded);
+}
+
+void test_nanoutf8(size_t len, const char* src, uint64_t ch)
+{
+  printf("# -------- %lX ------ %zu\n", ch, len);
+  printf("#  next_size\n");
+  test_nanoutf8_next_size(src[0], len);
+  printf("#  peek_char\n");
+  test_nanoutf8_peek_char(src, ch, len);
+  printf("#  encode\n");
+  test_nanoutf8_encode(src, ch, len);
+}
+
+void test_nanoutf8_run()
+{
+  // U+0000 00
+  test_nanoutf8(1, "\x00",     0x00000000);
+  // U+007F 7F
+  test_nanoutf8(1, "\x7f",     0x0000007f);
+  // U+0080 C2  80
+  test_nanoutf8(2, "\xc2\x80", 0x00000080);
+  // U+07FF DF  BF
+  test_nanoutf8(2, "\xdf\xbf", 0x000007ff);
+  // U+0800 E0  A0  80
+  test_nanoutf8(3, "\xe0\xa0\x80", 0x0000800);
+  // U+FFFF EF  BF  BF
+  test_nanoutf8(3, "\xef\xbf\xbf", 0x000FFFF);
+  // U+10000 F0  90  80  80
+  test_nanoutf8(4, "\xf0\x90\x80\x80", 0x0010000);
+  // U+1FFFFF F7  BF  BF  BF
+  test_nanoutf8(4, "\xf7\xbf\xbf\xbf", 0x01FFFFF);
+  // U+200000 F8  88  80  80  80
+  test_nanoutf8(5, "\xf8\x88\x80\x80\x80", 0x0200000);
+  // U+3FFFFFF FB BF  BF  BF  BF
+  test_nanoutf8(5, "\xfb\xbf\xbf\xbf\xbf", 0x3FFFFFF);
+  // U+4000000  FC  84  80  80  80  80
+  test_nanoutf8(6, "\xfc\x84\x80\x80\x80\x80", 0x4000000);
+  // U+7FFFFFFF FD  BF  BF  BF  BF  BF
+  test_nanoutf8(6, "\xfd\xbf\xbf\xbf\xbf\xbf", 0x7FFFFFFF);
 }
 
 int main() {
-  printf("1..22\n");
+  printf("1..78\n");
 
-  header("nanoutf8_next_size");
-
-  // basic latin \x61
-  ok(nanoutf8_next_size("a"[0]));
-  // copyright sign U+00A9 \xc2\xa9
-  ok(nanoutf8_next_size("\xc2\xa9"[0]) == 2);
-  // Japanese hiragana U+3042 
-  ok(nanoutf8_next_size("\xE3\x81\x82"[0]) == 3);
-  // LYCIAN LETTER A U+10280
-  ok(nanoutf8_next_size("\xf0\x90\x8a\x80"[0]) == 4);
-  // U+20016
-  ok(nanoutf8_next_size("\xf0\xa0\x80\x96"[0]) == 4);
-
-  header("nanoutf8_peek_char");
-  {
-    bool succeeded;
-    size_t len;
-    int32_t ch = nanoutf8_peek_char("あ", strlen("あ"), &len, &succeeded);
-    ok(ch == 0x3042);
-    ok(len == 3);
-    ok(succeeded);
-  }
-  test_nanoutf8_encode();
+  test_nanoutf8_run();
+  test_nanoutf8(3, "あ", 0x3042);
 }
