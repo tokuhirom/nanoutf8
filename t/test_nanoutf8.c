@@ -7,12 +7,7 @@
 // tap utils
 #define ok(b) printf("%s - %s line %d\n", (b) ? "ok" : "not ok", __FILE__, __LINE__);
 
-inline void note(const char*s)
-{
-  printf("# %s\n", s);
-}
-
-void test_nanoutf8_encode(const char* src, uint64_t ch, size_t len)
+static void test_nanoutf8_encode(const char* src, uint64_t ch, size_t len)
 {
   char buf[6];
   size_t got_len = nanoutf8_encode(ch, buf);
@@ -20,12 +15,12 @@ void test_nanoutf8_encode(const char* src, uint64_t ch, size_t len)
   ok(memcmp(buf, src, len) == 0);
 }
 
-void test_nanoutf8_next_size(char src, size_t len)
+static void test_nanoutf8_next_size(char src, size_t len)
 {
   ok(nanoutf8_next_size(src) == len);
 }
 
-void test_nanoutf8_peek_char(const char* src, uint64_t ch, size_t len) {
+static void test_nanoutf8_peek_char(const char* src, uint64_t ch, size_t len) {
   bool succeeded;
   size_t got_len;
   uint64_t got_ch = nanoutf8_peek_char(src, len, &got_len, &succeeded);
@@ -34,7 +29,7 @@ void test_nanoutf8_peek_char(const char* src, uint64_t ch, size_t len) {
   ok(succeeded);
 }
 
-void test_nanoutf8(size_t len, const char* src, uint64_t ch)
+static void test_nanoutf8(size_t len, const char* src, uint64_t ch)
 {
   printf("# -------- %lX ------ %zu\n", ch, len);
   printf("#  next_size\n");
@@ -45,7 +40,7 @@ void test_nanoutf8(size_t len, const char* src, uint64_t ch)
   test_nanoutf8_encode(src, ch, len);
 }
 
-void test_nanoutf8_run()
+static void test_nanoutf8_run()
 {
   // U+0000 00
   test_nanoutf8(1, "\x00",     0x00000000);
