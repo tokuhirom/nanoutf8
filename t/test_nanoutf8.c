@@ -15,9 +15,9 @@ static void test_nanoutf8_encode(const char* src, uint64_t ch, size_t len)
   ok(memcmp(buf, src, len) == 0);
 }
 
-static void test_nanoutf8_next_size(char src, size_t len)
+static void test_nanoutf8_byte_count_from_first_char(char src, size_t len)
 {
-  ok(nanoutf8_next_size(src) == len);
+  ok(nanoutf8_byte_count_from_first_char(src) == len);
 }
 
 static void test_nanoutf8_peek_char(const char* src, uint64_t ch, size_t len) {
@@ -33,7 +33,7 @@ static void test_nanoutf8(size_t len, const char* src, uint64_t ch)
 {
   printf("# -------- %lX ------ %zu\n", ch, len);
   printf("#  next_size\n");
-  test_nanoutf8_next_size(src[0], len);
+  test_nanoutf8_byte_count_from_first_char(src[0], len);
   printf("#  peek_char\n");
   test_nanoutf8_peek_char(src, ch, len);
   printf("#  encode\n");

@@ -5,9 +5,25 @@ Tiny UTF-8 library for C/C++.
 
 This library provides some basic functions for operating UTF-8 string.
 
-## Limitations
+## Functions
 
-This library only supports 1〜4bytes.
+### `static size_t nanoutf8_byte_count_from_first_char(char c)`
+
+Detect the next char's size.
+
+### `static size_t nanoutf8_encode(uint64_t ch, char *buf)`
+
+Encode ch to buf.
+
+This function returns the bytes.
+
+### `static uint32_t nanoutf8_peek_char(const char* const src, size_t srclen, size_t *lenp, bool *ok)`
+
+Peek one UTF-8 character from src. srclen is the length of src.
+
+This function writes length of first character to lenp.
+
+If an error was detected, this function makes `*ok` to false.
 
 ## LICENSE
 

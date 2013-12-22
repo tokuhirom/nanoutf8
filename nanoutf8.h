@@ -18,7 +18,7 @@
 
 */
 
-static size_t nanoutf8_next_size(char c) {
+static size_t nanoutf8_byte_count_from_first_char(char c) {
   if ((c & 0x80) == 0x00)
     return 1;
   if ((c & 0xE0) == 0xC0)
@@ -86,7 +86,7 @@ static uint32_t nanoutf8_peek_char(const char* const src, size_t srclen, size_t 
     *ok = false;
     return 0;
   }
-  *lenp = nanoutf8_next_size(src[0]);
+  *lenp = nanoutf8_byte_count_from_first_char(src[0]);
   switch (*lenp) {
   case 1:
     *ok = true;
